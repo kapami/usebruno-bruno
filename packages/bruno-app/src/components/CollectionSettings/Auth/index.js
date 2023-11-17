@@ -2,8 +2,10 @@ import React from 'react';
 import get from 'lodash/get';
 import { useDispatch } from 'react-redux';
 import AuthMode from './AuthMode';
+import AwsV4Auth from './AwsV4Auth';
 import BearerAuth from './BearerAuth';
 import BasicAuth from './BasicAuth';
+import DigestAuth from './DigestAuth';
 import { saveCollectionRoot } from 'providers/ReduxStore/slices/collections/actions';
 import StyledWrapper from './StyledWrapper';
 
@@ -15,11 +17,17 @@ const Auth = ({ collection }) => {
 
   const getAuthView = () => {
     switch (authMode) {
+      case 'awsv4': {
+        return <AwsV4Auth collection={collection} />;
+      }
       case 'basic': {
         return <BasicAuth collection={collection} />;
       }
       case 'bearer': {
         return <BearerAuth collection={collection} />;
+      }
+      case 'digest': {
+        return <DigestAuth collection={collection} />;
       }
     }
   };

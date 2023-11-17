@@ -1,6 +1,8 @@
 const Handlebars = require('handlebars');
 const { cloneDeep } = require('lodash');
 
+const envVariableNameRegex = /^(?!\d)[\w-]*$/;
+
 class Bru {
   constructor(envVariables, collectionVariables, processEnvVars, collectionPath) {
     this.envVariables = envVariables;
@@ -59,10 +61,24 @@ class Bru {
       throw new Error('Key is required');
     }
 
+    if (envVariableNameRegex.test(key) === false) {
+      throw new Error(
+        `Variable name: "${key}" contains invalid characters!` +
+          ' Names must only contain alpha-numeric characters, "-", "_" and cannot start with a digit.'
+      );
+    }
+
     this.collectionVariables[key] = value;
   }
 
   getVar(key) {
+    if (envVariableNameRegex.test(key) === false) {
+      throw new Error(
+        `Variable name: "${key}" contains invalid characters!` +
+          ' Names must only contain alpha-numeric characters and cannot start with a digit.'
+      );
+    }
+
     return this.collectionVariables[key];
   }
 }

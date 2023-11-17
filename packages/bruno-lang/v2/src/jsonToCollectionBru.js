@@ -75,6 +75,19 @@ ${indentString(`mode: ${auth.mode}`)}
 `;
   }
 
+  if (auth && auth.awsv4) {
+    bru += `auth:awsv4 {
+${indentString(`accessKeyId: ${auth.awsv4.accessKeyId}`)}
+${indentString(`secretAccessKey: ${auth.awsv4.secretAccessKey}`)}
+${indentString(`sessionToken: ${auth.awsv4.sessionToken}`)}
+${indentString(`service: ${auth.awsv4.service}`)}
+${indentString(`region: ${auth.awsv4.region}`)}
+${indentString(`profileName: ${auth.awsv4.profileName}`)}
+}
+
+`;
+  }
+
   if (auth && auth.basic) {
     bru += `auth:basic {
 ${indentString(`username: ${auth.basic.username}`)}
@@ -87,6 +100,15 @@ ${indentString(`password: ${auth.basic.password}`)}
   if (auth && auth.bearer) {
     bru += `auth:bearer {
 ${indentString(`token: ${auth.bearer.token}`)}
+}
+
+`;
+  }
+
+  if (auth && auth.digest) {
+    bru += `auth:digest {
+${indentString(`username: ${auth.digest.username}`)}
+${indentString(`password: ${auth.digest.password}`)}
 }
 
 `;

@@ -14,6 +14,7 @@ import Timeline from './Timeline';
 import TestResults from './TestResults';
 import TestResultsLabel from './TestResultsLabel';
 import StyledWrapper from './StyledWrapper';
+import ResponseSave from 'src/components/ResponsePane/ResponseSave';
 
 const ResponsePane = ({ rightPaneWidth, item, collection }) => {
   const dispatch = useDispatch();
@@ -41,7 +42,10 @@ const ResponsePane = ({ rightPaneWidth, item, collection }) => {
             collection={collection}
             width={rightPaneWidth}
             data={response.data}
+            dataBuffer={response.dataBuffer}
             headers={response.headers}
+            error={response.error}
+            key={item.filename}
           />
         );
       }
@@ -94,7 +98,7 @@ const ResponsePane = ({ rightPaneWidth, item, collection }) => {
 
   return (
     <StyledWrapper className="flex flex-col h-full relative">
-      <div className="flex flex-wrap items-center px-3 tabs" role="tablist">
+      <div className="flex flex-wrap items-center pl-3 pr-4 tabs" role="tablist">
         <div className={getTabClassname('response')} role="tab" onClick={() => selectTab('response')}>
           Response
         </div>
@@ -109,13 +113,16 @@ const ResponsePane = ({ rightPaneWidth, item, collection }) => {
         </div>
         {!isLoading ? (
           <div className="flex flex-grow justify-end items-center">
+            <ResponseSave item={item} />
             <StatusCode status={response.status} />
             <ResponseTime duration={response.duration} />
             <ResponseSize size={response.size} />
           </div>
         ) : null}
       </div>
-      <section className={`flex flex-grow relative ${focusedTab.responsePaneTab === 'response' ? '' : 'mt-4'}`}>
+      <section
+        className={`flex flex-grow relative pl-3 pr-4 ${focusedTab.responsePaneTab === 'response' ? '' : 'mt-4'}`}
+      >
         {isLoading ? <Overlay item={item} collection={collection} /> : null}
         {getTabPanel(focusedTab.responsePaneTab)}
       </section>

@@ -23,7 +23,7 @@ const { outdentString } = require('../../v1/src/utils');
  */
 const grammar = ohm.grammar(`Bru {
   BruFile = (meta | http | query | headers | auths | bodies | varsandassert | script | tests | docs)*
-  auths = authbasic | authbearer 
+  auths = authawsv4 | authbasic | authbearer | authdigest 
   bodies = bodyjson | bodytext | bodyxml | bodysparql | bodygraphql | bodygraphqlvars | bodyforms | body
   bodyforms = bodyformurlencoded | bodymultipart
 
@@ -76,8 +76,10 @@ const grammar = ohm.grammar(`Bru {
   varsres = "vars:post-response" dictionary
   assert = "assert" assertdictionary
 
+  authawsv4 = "auth:awsv4" dictionary
   authbasic = "auth:basic" dictionary
   authbearer = "auth:bearer" dictionary
+  authdigest = "auth:digest" dictionary
 
   body = "body" st* "{" nl* textblock tagend
   bodyjson = "body:json" st* "{" nl* textblock tagend
@@ -103,7 +105,7 @@ const mapPairListToKeyValPairs = (pairList = [], parseEnabled = true) => {
   }
   return _.map(pairList[0], (pair) => {
     let name = _.keys(pair)[0];
-    let value = pair[name];
+    let value = decodeURIComponent(pair[name]);
 
     if (!parseEnabled) {
       return {
@@ -295,6 +297,33 @@ const sem = grammar.createSemantics().addAttribute('ast', {
       headers: mapPairListToKeyValPairs(dictionary.ast)
     };
   },
+  authawsv4(_1, dictionary) {
+    const auth = mapPairListToKeyValPairs(dictionary.ast, false);
+    const accessKeyIdKey = _.find(auth, { name: 'accessKeyId' });
+    const secretAccessKeyKey = _.find(auth, { name: 'secretAccessKey' });
+    const sessionTokenKey = _.find(auth, { name: 'sessionToken' });
+    const serviceKey = _.find(auth, { name: 'service' });
+    const regionKey = _.find(auth, { name: 'region' });
+    const profileNameKey = _.find(auth, { name: 'profileName' });
+    const accessKeyId = accessKeyIdKey ? accessKeyIdKey.value : '';
+    const secretAccessKey = secretAccessKeyKey ? secretAccessKeyKey.value : '';
+    const sessionToken = sessionTokenKey ? sessionTokenKey.value : '';
+    const service = serviceKey ? serviceKey.value : '';
+    const region = regionKey ? regionKey.value : '';
+    const profileName = profileNameKey ? profileNameKey.value : '';
+    return {
+      auth: {
+        awsv4: {
+          accessKeyId,
+          secretAccessKey,
+          sessionToken,
+          service,
+          region,
+          profileName
+        }
+      }
+    };
+  },
   authbasic(_1, dictionary) {
     const auth = mapPairListToKeyValPairs(dictionary.ast, false);
     const usernameKey = _.find(auth, { name: 'username' });
@@ -318,6 +347,21 @@ const sem = grammar.createSemantics().addAttribute('ast', {
       auth: {
         bearer: {
           token
+        }
+      }
+    };
+  },
+  authdigest(_1, dictionary) {
+    const auth = mapPairListToKeyValPairs(dictionary.ast, false);
+    const usernameKey = _.find(auth, { name: 'username' });
+    const passwordKey = _.find(auth, { name: 'password' });
+    const username = usernameKey ? usernameKey.value : '';
+    const password = passwordKey ? passwordKey.value : '';
+    return {
+      auth: {
+        digest: {
+          username,
+          password
         }
       }
     };

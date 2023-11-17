@@ -1,5 +1,6 @@
-const { get, each, filter } = require('lodash');
+const { get, each, filter, forOwn, extend } = require('lodash');
 const decomment = require('decomment');
+const FormData = require('form-data');
 
 // Authentication
 // A request can override the collection auth with another auth
@@ -8,28 +9,61 @@ const decomment = require('decomment');
 const setAuthHeaders = (axiosRequest, request, collectionRoot) => {
   const collectionAuth = get(collectionRoot, 'request.auth');
   if (collectionAuth) {
-    if (collectionAuth.mode === 'basic') {
-      axiosRequest.auth = {
-        username: get(collectionAuth, 'basic.username'),
-        password: get(collectionAuth, 'basic.password')
-      };
-    }
-
-    if (collectionAuth.mode === 'bearer') {
-      axiosRequest.headers['authorization'] = `Bearer ${get(collectionAuth, 'bearer.token')}`;
+    switch (collectionAuth.mode) {
+      case 'awsv4':
+        axiosRequest.awsv4config = {
+          accessKeyId: get(collectionAuth, 'awsv4.accessKeyId'),
+          secretAccessKey: get(collectionAuth, 'awsv4.secretAccessKey'),
+          sessionToken: get(collectionAuth, 'awsv4.sessionToken'),
+          service: get(collectionAuth, 'awsv4.service'),
+          region: get(collectionAuth, 'awsv4.region'),
+          profileName: get(collectionAuth, 'awsv4.profileName')
+        };
+        break;
+      case 'basic':
+        axiosRequest.auth = {
+          username: get(collectionAuth, 'basic.username'),
+          password: get(collectionAuth, 'basic.password')
+        };
+        break;
+      case 'bearer':
+        axiosRequest.headers['authorization'] = `Bearer ${get(collectionAuth, 'bearer.token')}`;
+        break;
+      case 'digest':
+        axiosRequest.digestConfig = {
+          username: get(collectionAuth, 'digest.username'),
+          password: get(collectionAuth, 'digest.password')
+        };
+        break;
     }
   }
 
   if (request.auth) {
-    if (request.auth.mode === 'basic') {
-      axiosRequest.auth = {
-        username: get(request, 'auth.basic.username'),
-        password: get(request, 'auth.basic.password')
-      };
-    }
-
-    if (request.auth.mode === 'bearer') {
-      axiosRequest.headers['authorization'] = `Bearer ${get(request, 'auth.bearer.token')}`;
+    switch (request.auth.mode) {
+      case 'awsv4':
+        axiosRequest.awsv4config = {
+          accessKeyId: get(request, 'auth.awsv4.accessKeyId'),
+          secretAccessKey: get(request, 'auth.awsv4.secretAccessKey'),
+          sessionToken: get(request, 'auth.awsv4.sessionToken'),
+          service: get(request, 'auth.awsv4.service'),
+          region: get(request, 'auth.awsv4.region'),
+          profileName: get(request, 'auth.awsv4.profileName')
+        };
+        break;
+      case 'basic':
+        axiosRequest.auth = {
+          username: get(request, 'auth.basic.username'),
+          password: get(request, 'auth.basic.password')
+        };
+        break;
+      case 'bearer':
+        axiosRequest.headers['authorization'] = `Bearer ${get(request, 'auth.bearer.token')}`;
+        break;
+      case 'digest':
+        axiosRequest.digestConfig = {
+          username: get(request, 'auth.digest.username'),
+          password: get(request, 'auth.digest.password')
+        };
     }
   }
 
@@ -62,7 +96,8 @@ const prepareRequest = (request, collectionRoot) => {
   let axiosRequest = {
     method: request.method,
     url: request.url,
-    headers: headers
+    headers: headers,
+    responseType: 'arraybuffer'
   };
 
   axiosRequest = setAuthHeaders(axiosRequest, request, collectionRoot);
@@ -114,6 +149,15 @@ const prepareRequest = (request, collectionRoot) => {
     each(enabledParams, (p) => (params[p.name] = p.value));
     axiosRequest.headers['content-type'] = 'multipart/form-data';
     axiosRequest.data = params;
+
+    // make axios work in node using form data
+    // reference: https://github.com/axios/axios/issues/1006#issuecomment-320165427
+    const form = new FormData();
+    forOwn(axiosRequest.data, (value, key) => {
+      form.append(key, value);
+    });
+    extend(axiosRequest.headers, form.getHeaders());
+    axiosRequest.data = form;
   }
 
   if (request.body.mode === 'graphql') {

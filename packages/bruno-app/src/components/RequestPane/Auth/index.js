@@ -1,8 +1,10 @@
 import React from 'react';
 import get from 'lodash/get';
 import AuthMode from './AuthMode';
+import AwsV4Auth from './AwsV4Auth';
 import BearerAuth from './BearerAuth';
 import BasicAuth from './BasicAuth';
+import DigestAuth from './DigestAuth';
 import StyledWrapper from './StyledWrapper';
 
 const Auth = ({ item, collection }) => {
@@ -10,11 +12,17 @@ const Auth = ({ item, collection }) => {
 
   const getAuthView = () => {
     switch (authMode) {
+      case 'awsv4': {
+        return <AwsV4Auth collection={collection} item={item} />;
+      }
       case 'basic': {
         return <BasicAuth collection={collection} item={item} />;
       }
       case 'bearer': {
         return <BearerAuth collection={collection} item={item} />;
+      }
+      case 'digest': {
+        return <DigestAuth collection={collection} item={item} />;
       }
     }
   };

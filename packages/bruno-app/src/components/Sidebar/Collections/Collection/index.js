@@ -14,6 +14,7 @@ import NewRequest from 'components/Sidebar/NewRequest';
 import NewFolder from 'components/Sidebar/NewFolder';
 import CollectionItem from './CollectionItem';
 import RemoveCollection from './RemoveCollection';
+import ExportCollection from './ExportCollection';
 import CollectionProperties from './CollectionProperties';
 import { doesCollectionHaveItemsMatchingSearchText } from 'utils/collections/search';
 import { isItemAFolder, isItemARequest, transformCollectionToSaveToExportAsFile } from 'utils/collections';
@@ -26,6 +27,7 @@ const Collection = ({ collection, searchText }) => {
   const [showNewFolderModal, setShowNewFolderModal] = useState(false);
   const [showNewRequestModal, setShowNewRequestModal] = useState(false);
   const [showRenameCollectionModal, setShowRenameCollectionModal] = useState(false);
+  const [showExportCollectionModal, setShowExportCollectionModal] = useState(false);
   const [showRemoveCollectionModal, setShowRemoveCollectionModal] = useState(false);
   const [collectionPropertiesModal, setCollectionPropertiesModal] = useState(false);
   const [collectionIsCollapsed, setCollectionIsCollapsed] = useState(collection.collapsed);
@@ -64,20 +66,17 @@ const Collection = ({ collection, searchText }) => {
   });
 
   const handleClick = (event) => {
+    dispatch(collectionClicked(collection.uid));
+  };
+
+  const handleRightClick = (event) => {
     const _menuDropdown = menuDropdownTippyRef.current;
-    switch (event.button) {
-      case 0: // left click
-        dispatch(collectionClicked(collection.uid));
-        return;
-      case 2: // right click
-        if (_menuDropdown) {
-          let menuDropdownBehavior = 'show';
-          if (_menuDropdown.state.isShown) {
-            menuDropdownBehavior = 'hide';
-          }
-          _menuDropdown[menuDropdownBehavior]();
-        }
-        return;
+    if (_menuDropdown) {
+      let menuDropdownBehavior = 'show';
+      if (_menuDropdown.state.isShown) {
+        menuDropdownBehavior = 'hide';
+      }
+      _menuDropdown[menuDropdownBehavior]();
     }
   };
 
@@ -129,11 +128,18 @@ const Collection = ({ collection, searchText }) => {
       {showRemoveCollectionModal && (
         <RemoveCollection collection={collection} onClose={() => setShowRemoveCollectionModal(false)} />
       )}
+      {showExportCollectionModal && (
+        <ExportCollection collection={collection} onClose={() => setShowExportCollectionModal(false)} />
+      )}
       {collectionPropertiesModal && (
         <CollectionProperties collection={collection} onClose={() => setCollectionPropertiesModal(false)} />
       )}
       <div className="flex py-1 collection-name items-center" ref={drop}>
-        <div className="flex flex-grow items-center overflow-hidden" onMouseUp={handleClick}>
+        <div
+          className="flex flex-grow items-center overflow-hidden"
+          onClick={handleClick}
+          onContextMenu={handleRightClick}
+        >
           <IconChevronRight
             size={16}
             strokeWidth={2}
@@ -186,7 +192,7 @@ const Collection = ({ collection, searchText }) => {
               className="dropdown-item"
               onClick={(e) => {
                 menuDropdownTippyRef.current.hide();
-                handleExportClick(true);
+                setShowExportCollectionModal(true);
               }}
             >
               Export

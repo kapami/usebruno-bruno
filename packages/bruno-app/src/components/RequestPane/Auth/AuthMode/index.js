@@ -39,6 +39,15 @@ const AuthMode = ({ item, collection }) => {
             className="dropdown-item"
             onClick={() => {
               dropdownTippyRef.current.hide();
+              onModeChange('awsv4');
+            }}
+          >
+            AWS Sig v4
+          </div>
+          <div
+            className="dropdown-item"
+            onClick={() => {
+              dropdownTippyRef.current.hide();
               onModeChange('basic');
             }}
           >
@@ -52,6 +61,15 @@ const AuthMode = ({ item, collection }) => {
             }}
           >
             Bearer Token
+          </div>
+          <div
+            className="dropdown-item"
+            onClick={() => {
+              dropdownTippyRef.current.hide();
+              onModeChange('digest');
+            }}
+          >
+            Digest Auth
           </div>
           <div
             className="dropdown-item"
